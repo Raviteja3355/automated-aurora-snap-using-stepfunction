@@ -4,7 +4,7 @@ version: 2.1
 parameters:
   terraform_version:
     type: string
-    default: "1.7.5"
+    default: "1.10.3"
   terragrunt_version:
     type: string
     default: "0.55.18"
