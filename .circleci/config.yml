@@ -1,6 +1,6 @@
 version: 2.1
-
-# ── Tool versions ──────────────────────────────────────────────────────────────
+# checking the ci integration
+# ─----- Tool versions ──────────────────────────────────────────────────────────────
 parameters:
   terraform_version:
     type: string
