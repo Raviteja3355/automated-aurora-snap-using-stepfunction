@@ -1,0 +1,114 @@
+version: 2.1
+
+# ── Tool versions ──────────────────────────────────────────────────────────────
+parameters:
+  terraform_version:
+    type: string
+    default: "1.7.5"
+  terragrunt_version:
+    type: string
+    default: "0.55.18"
+
+# ── Reusable commands ──────────────────────────────────────────────────────────
+commands:
+  install_tools:
+    description: Install Terraform and Terragrunt
+    steps:
+      - run:
+          name: Install Terraform
+          command: |
+            wget -q https://releases.hashicorp.com/terraform/<< pipeline.parameters.terraform_version >>/terraform_<< pipeline.parameters.terraform_version >>_linux_amd64.zip
+            unzip terraform_<< pipeline.parameters.terraform_version >>_linux_amd64.zip
+            sudo mv terraform /usr/local/bin/
+            terraform version
+
+      - run:
+          name: Install Terragrunt
+          command: |
+            wget -q https://github.com/gruntwork-io/terragrunt/releases/download/v<< pipeline.parameters.terragrunt_version >>/terragrunt_linux_amd64
+            chmod +x terragrunt_linux_amd64
+            sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+            terragrunt --version
+
+# ── Jobs ───────────────────────────────────────────────────────────────────────
+jobs:
+  plan:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/project
+    steps:
+      - checkout
+      - install_tools
+      - run:
+          name: Terragrunt Init + Plan
+          command: |
+            cd poc/dev
+            terragrunt init --terragrunt-non-interactive
+            terragrunt plan --terragrunt-non-interactive
+
+  apply:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/project
+    steps:
+      - checkout
+      - install_tools
+      - run:
+          name: Terragrunt Apply
+          command: |
+            cd poc/dev
+            terragrunt init --terragrunt-non-interactive
+            terragrunt apply -auto-approve --terragrunt-non-interactive
+
+  destroy:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/project
+    steps:
+      - checkout
+      - install_tools
+      - run:
+          name: Terragrunt Destroy
+          command: |
+            cd poc/dev
+            terragrunt init --terragrunt-non-interactive
+            terragrunt destroy -auto-approve --terragrunt-non-interactive
+
+# ── Workflows ──────────────────────────────────────────────────────────────────
+workflows:
+  deploy:
+    jobs:
+      # Plan runs automatically on every push
+      - plan
+
+      # Apply requires manual approval in CircleCI UI after plan succeeds
+      - hold-apply:
+          type: approval
+          requires:
+            - plan
+          filters:
+            branches:
+              only: main
+
+      - apply:
+          requires:
+            - hold-apply
+          filters:
+            branches:
+              only: main
+
+      # Destroy requires a separate manual approval (safety gate)
+      - hold-destroy:
+          type: approval
+          requires:
+            - plan
+          filters:
+            branches:
+              only: main
+
+      - destroy:
+          requires:
+            - hold-destroy
+          filters:
+            branches:
+              only: main

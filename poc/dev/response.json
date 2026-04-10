@@ -1,0 +1,1 @@
+{"results": [{"export_task": "exp-april1-0-20260401200513", "status": "INTEGRITY_FAILED", "error": "export_tables_info json not found under snapshots/april1-0/"}, {"export_task": "exp-april1st-20260401200513", "status": "OK", "deletion": "pending", "days_remaining": 1}]}

@@ -1,0 +1,30 @@
+# Terragrunt cache
+.terragrunt-cache/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+override.tf
+override.tf.json
+crash.log
+
+# Editor / AI tool config (local only)
+.claude/
+.cursorrules
+.windsurfrules
+.mcp.json
+.opencode.json
+AGENTS.md
+GEMINI.md
+
+# Word documents
+*.docx
+
+# Word temp lock files
+~$*.docx
+
+# OS
+.DS_Store
+Thumbs.db
