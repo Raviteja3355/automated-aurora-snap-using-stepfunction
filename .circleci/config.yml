@@ -73,7 +73,19 @@ jobs:
             cd poc/dev
             terragrunt init --terragrunt-non-interactive
             terragrunt destroy -auto-approve --terragrunt-non-interactive
-
+# added the manual triggering of the state-machine
+  trigger-state-machine:
+      docker:
+        - image: cimg/aws:2024.03   # pre-built image with AWS CLI already installed
+      working_directory: ~/project
+      steps:
+        - run:
+            name: Trigger Step Functions State Machine
+            command: |
+              aws stepfunctions start-execution \
+                --region ap-south-1 \
+                --state-machine-arn "arn:aws:states:ap-south-1:320042238069:stateMachine:dev-stfs-aurora-snapshot-pipeline" \
+                --name "manual-circleci-$(date +%Y%m%d%H%M%S)"
 # ── Workflows ──────────────────────────────────────────────────────────────────
 workflows:
   deploy:
@@ -112,3 +124,18 @@ workflows:
           filters:
             branches:
               only: main
+# Trigger Step Functions — manual approval required
+      - hold-trigger-sfn:
+            type: approval
+            requires:
+              - apply
+            filters:
+              branches:
+                only: main
+
+      - trigger-state-machine:
+            requires:
+              - hold-trigger-sfn
+            filters:
+              branches:
+                only: main
